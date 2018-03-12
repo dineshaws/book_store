@@ -14,5 +14,5 @@ Mongodb version > 3.6.0
 1. Compile - `gulp`
 1. Test - `npm test`
 1. Run the development server - `npm start`
-
+1. Access localhost- `http://localhost:8080`
 
