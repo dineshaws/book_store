@@ -1,0 +1,90 @@
+<!doctype html>
+<html>
+<head>
+	<title>Book Store</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css"> <!-- load bootstrap css -->
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"> <!-- load fontawesome -->
+	<link rel="stylesheet" type="text/css" href="css/structure.css">
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+	<style>
+		body 		{ padding-top:80px; }
+	</style>
+</head>
+<body>
+<div class="container">
+
+<div class="col-sm-6 col-sm-offset-3">
+
+	<h1><span class="fa fa-sign-in"></span> Signin</h1>
+
+	<div id="alert_success" class="alert alert-success"></div>
+	<div id="alert_danger" class="alert alert-danger"></div>
+
+	<!-- LOGIN FORM -->
+	<form action="javascript:void(0)" method="post" id="signInForm">
+		<div class="form-group">
+			<label>Email</label>
+			<input type="text" class="form-control" name="email" id="email">
+		</div>
+		<div class="form-group">
+			<label>Password</label>
+			<input type="password" class="form-control" name="password" id="password">
+		</div>
+
+		<button type="submit"  id="signin_id" class="btn btn-warning btn-lg">Signin</button>
+	</form>
+
+	<hr>
+
+	<p>Need an account? <a href="/signup">Signup</a></p>
+	<p>Or go <a href="/">home</a>.</p>
+
+</div>
+
+</div>
+
+<script>
+$(document).ready(function() {
+
+    $("#signin_id").click(function () {
+        $(this).addClass('button_loading');
+        $('.notify-red').hide();
+        $('.notify-green').hide();
+        var form = new Object();
+        form["email"] = $("#email").val();
+        form["password"] = $("#password").val();
+        console.log(form);
+        fetch("/api/v1/users/signin", { 
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }, 
+            body: JSON.stringify(form)
+        })
+        .then(function(response) {
+            console.log(response);
+            return response.json()
+        })
+        .then(function(data) {
+            $("#signin_id").removeClass('button_loading');
+            if(data.apiStatus && data.apiStatus == "Failure") {
+                $('.alert-danger').html(data.message);
+                $('.alert-danger').show();
+            } else {
+            	// set the token in localStorage
+				localStorage.setItem('bs_token', data.token);
+                $('.alert-success').html(data.message);
+                $('.alert-success').show();
+                setTimeout(function() {
+                	window.location.href="profile";
+                },2000)
+            }
+        });
+    });
+
+});
+
+</script>
+</body>
+</html>

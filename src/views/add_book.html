@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+    <title>Book Store</title>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/structure.css">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+    <style>
+        body        { padding-top:80px; word-wrap:break-word; }
+        #ddlsearch {
+            width: auto;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- show any messages that come back with authentication -->
+    <div id="alert_success" class="alert alert-success"></div>
+    <div id="alert_danger" class="alert alert-danger"></div>
+
+    <div class="page-header text-center">
+        <h1><span class="fa fa-anchor"></span> Add Book Page</h1>
+        <a href="/profile" class="btn btn-default btn-sm">Profle</a>
+        <a href="javascript:void(0)" onclick="signout();" class="btn btn-default btn-sm">Signout</a>
+    </div>
+
+    <div class="row">
+
+        <!-- LOCAL INFORMATION -->
+        <div class="col-sm-6">
+            <div class="well">
+                <h3><span class="fa fa-user"></span> Local</h3>
+
+                    <p>
+                        <strong>Username</strong>: <span id="username"></span><br>
+                        <strong>Email</strong>: <span id="email"></span><br>
+                        <strong>Role</strong>: <span id="role"></span>
+                    </p>
+
+            </div>
+        </div>
+
+        <div class="col-sm-6"> 
+            <div class="well">
+            <h3><span class="fa fa-plus"></span> Add Book</h3>
+
+                <form action="javascript:void(0)" method="post"  id="addBookForm">
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" class="form-control" name="title" id="title">
+                    </div>
+                    <div class="form-group">
+                        <label>Sub Title</label>
+                        <input type="text" class="form-control" name="subtitle" id="subtitle">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <input type="text" class="form-control" name="description" id="description">
+                    </div>
+                    <div class="form-group">
+                        <label>ISBN 10</label>
+                        <input type="text" class="form-control" name="isbn_10" id="isbn_10">
+                    </div>
+                    <div class="form-group">
+                        <label>ISBN 13</label>
+                        <input type="text" class="form-control" name="isbn_13" id="isbn_13">
+                    </div>
+                    <div class="form-group">
+                        <label>Authors *</label>
+                        <input type="text" placeholder="comma seprated" class="form-control" name="authors" id="authors">
+                    </div>
+                    <div class="form-group">
+                        <label>Genre *</label>
+                        <input type="text" placeholder="comma seprated" class="form-control" name="genre" id="genre">
+                    </div>
+                    <div class="form-group">
+                        <label>Publisher</label>
+                        <input type="text" class="form-control" name="publisher" id="publisher">
+                    </div>
+                    <div class="form-group">
+                        <label>Published Date</label>
+                        <input type="text" class="form-control" name="publishedDate" id="publishedDate">
+                    </div>
+                    <div class="form-group">
+                        <label>Cover</label>
+                        <input type="file" class="form-control" name="cover" id="cover">
+                    </div>
+
+                    <button type="submit" id="addbook_id"  class="btn btn-warning btn-lg">Add</button>
+                </form>
+
+
+
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row" id="Result">
+
+    </div>
+
+</div>
+
+<script>
+var token = localStorage.getItem('bs_token');
+
+
+$(document).ready(function() {
+
+    $("#addbook_id").click(function () {
+        var form = new Object();
+        form["title"] = $("#title").val();
+        form["subtitle"] = $("#subtitle").val();
+        form["isbn_10"] = $("#isbn_10").val();
+        form["isbn_13"] = $("#isbn_13").val();
+        form["description"] = $("#description").val();
+        if($("#authors").val() && $("#authors").val().length) {
+            form["authors"] = $("#authors").val().split(',');
+        }
+        if($("#genre").val() && $("#genre").val().length) {
+            form["categories"] = $("#genre").val().split(',');
+        }
+        form["publisher"] = $("#publisher").val();
+        form["publishedDate"] = $("#publishedDate").val();
+        form["seed_type"] = "UI";
+        console.log(form);
+        fetch("/api/v1/books/add", { 
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'access-token': token
+            }, 
+            body: JSON.stringify(form)
+        })
+        .then(function(response) {
+            return response.json()
+        })
+        .then(function(data) {
+            console.log("data ",JSON.stringify(data));
+            if(data.apiStatus && data.apiStatus == "Failure") {
+                $('.alert-danger').html(data.message);
+                $('.alert-danger').show();
+            } else {
+                $('.alert-success').html(data.message);
+                $('.alert-success').show();
+            }
+        });
+    });
+
+
+    fetch("/api/v1/users/profile", { 
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'access-token': token
+        }
+    })
+    .then(function(response) {
+        console.log(response);
+        return response.json()
+    })
+    .then(function(data) {
+        if(data.apiStatus && data.apiStatus == "Failure") {
+            $('.alert-danger').html(data.message);
+            $('.alert-danger').show();
+            setTimeout(function() {
+                window.location.href="signin";
+            },1000);
+        } else {
+            //$('.alert-success').html(data.message);
+            //$('.alert-success').show();
+            $('#username').html(data.userInfo.username);
+            $('#email').html(data.userInfo.email);
+            $('#role').html(data.userInfo.role);
+            
+        }
+    });
+
+    
+
+});
+
+function signout() {
+        fetch("/api/v1/users/signout", { 
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'access-token':token
+            }
+        })
+        .then(function(response) {
+            console.log(response);
+            return response.json()
+        })
+        .then(function(data) {
+            if(data.apiStatus && data.apiStatus == "Failure") {
+                $('.alert-danger').html(data.message);
+                $('.alert-danger').show();
+            } else {
+                $('.alert-success').html(data.message);
+                $('.alert-success').show();
+                localStorage.removeItem('bs_token');
+                setTimeout(function() {
+                    window.location.href="signin";
+                },1000);
+                
+            }
+        });
+    }
+
+</script>
+
+
+</body>
+</html>

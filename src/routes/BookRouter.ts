@@ -20,7 +20,7 @@ export class BookRouter {
    */
    init() {
    		this.router.get('/seed', BookController.seedBooks);
-         this.router.post('/add', ValidatorHelper.schemaValidate('add','book'), TokenHelper.validateToken, TokenHelper.hasRole(['editor']),  BookController.addBook); // only accessible to editor
+         this.router.post('/add', TokenHelper.validateToken, TokenHelper.hasRole(['editor']), ValidatorHelper.schemaValidate('add','book'), BookController.addBook); // only accessible to editor
          this.router.post('/search', ValidatorHelper.schemaValidate('search','book'), TokenHelper.validateToken, TokenHelper.hasRole(['admin','publisher','author','reader','editor']),  BookController.searchBook);
          this.router.get('/most_searched_book', TokenHelper.validateToken, TokenHelper.hasRole(['admin','publisher','author','reader','editor']),  BookController.mostSearchedBook);
    }

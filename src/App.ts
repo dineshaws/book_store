@@ -2,10 +2,16 @@ import * as path from 'path';
 import * as express from 'express';
 import * as logger from 'morgan';
 import * as bodyParser from 'body-parser';
-import * as flash from 'connect-flash';
+import * as cookieParser from 'cookie-parser';
+
 import * as ejs from 'ejs';
 import * as mongoose from 'mongoose';
 import * as dotenv from 'dotenv';
+import * as session from 'express-session';
+let MemoryStore =session.MemoryStore;
+import * as flash from 'express-flash-notification';
+//import * as flash from 'connect-flash';
+//import * as flash from 'req-flash';
 dotenv.config();
 
 import BookRouter from './routes/BookRouter';
@@ -33,7 +39,16 @@ class App {
     this.express.use(express.static(path.join(__dirname, 'public')));
     this.express.set('views', __dirname + '/views');
     this.express.engine('html', ejs.renderFile);
-    this.express.use(flash());
+    this.express.use(cookieParser('keyboard cat'));
+    //this.express.use(session({ secret: 'ilovescotchscotchyscotchscotch' })); // session secret
+    this.express.use(session({
+        name : 'app.sid',
+        secret: "1234567890QWERTY",
+        resave: true,
+        store: new MemoryStore(),
+        saveUninitialized: true
+    }));
+    this.express.use(flash()); // use connect-flash for flash messages stored in session
   }
 
   /**
@@ -68,6 +83,26 @@ class App {
       //res.sendFile('index.html', { root: __dirname});
       res.render('index.html');
     });
+    router.get('/signup', (req, res) =>  {
+      // render the page and pass in any flash data if it exists
+      res.render('signup.html');
+    });
+    router.get('/signin', (req, res)=>  {
+      // render the page and pass in any flash data if it exists
+
+      res.render('signin.html');
+    });
+    router.get('/profile', (req, res)=>  {
+      // render the page and pass in any flash data if it exists
+
+      res.render('profile.html');
+    });
+    router.get('/add_book', (req, res)=>  {
+      // render the page and pass in any flash data if it exists
+
+      res.render('add_book.html');
+    });
+
     this.express.use('/', router);
     this.express.use('/api/v1/books', BookRouter);
     this.express.use('/api/v1/users', UserRouter);

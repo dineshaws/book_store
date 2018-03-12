@@ -9,33 +9,21 @@ import TokenHelper from '../helpers/TokenHelper';
 export default class UserController {
 
     /**
-     * Get all
+     * Get profile
      * @param {*} req 
      * @param {*} res 
      * @param {*} next 
      */
-    public static async getAll(req: Request, res: Response, next: NextFunction) {
+    public static async profile(req: Request, res: Response, next: NextFunction) {
 
         try {
-
-            // 
-            // Get data
-            let result = await UserModel.find().exec();
-
-            // 
+            // Get current user profile
+            let userInfo = await UserModel.findOne({_id: req.user.user_id},{"_id":0,"email":1, "role":1, "username":1});
             // Response
-            res.send({
-                message: 'it works! We got all Users',
-                result: result
-            });
+            res.status(200).json({apiStatus: 'Success', "message": "User profile get successfully", "userInfo":userInfo});
         } catch (err) {
-
-            // 
             // Error response
-            res.send({
-                message: 'Could not get Users',
-                err: err
-            });
+            res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error": err});;
         }
     }
 
@@ -47,7 +35,6 @@ export default class UserController {
      */
     public static async signUp(req: Request, res: Response, next: NextFunction) {
 
-        // 
         // Create model
         let newUser = new UserModel();
         newUser.username = req.body.username;
@@ -59,28 +46,19 @@ export default class UserController {
         // check email is already exist
         try {
             let isUserExist = await UserModel.findOne({email: req.body.email});
-            console.log("isUserExist ",isUserExist)
             if(!isUserExist) {
               try {
                 // Save
                 await newUser.save();
-                console.log('New user successfully created...',req.body.username);
-                console.log('email',req.body.email);
-                console.log(newUser);
-                res.send({
-                  message: 'Created!'
-                });
+                res.status(200).json({"apiStatus": 'Success', "message": "User created successfully"});
               } catch(err) {
-                console.log(err);
-                res.status(400).json({errMsg: err});
+                res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error": err});
               }
             } else {
-              console.log('user already exists');
-              res.status(409).json({errMsg: 'email already exists'});
+              res.status(409).json({"apiStatus": "Failure", "message": 'Email already exists'});
             }
-        } catch(e) {
-          console.log(e);
-          res.status(400).json({errMsg: e});
+        } catch(err) {
+          res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error": err});;
         } 
     }
 
@@ -105,13 +83,11 @@ export default class UserController {
                 try {
                   //
                   let authDetail = await AuthModel.findOne({user_id: userDetails._id});
-                  console.log("authDetail ",authDetail);
                   if(authDetail) {
                     // generate token with existing auth record
                       console.log('Get Auth successfully...',authDetail);
                       let token = TokenHelper.getToken(authDetail);
-                      console.log('token.......',token);
-                      res.status(200).json({apiStatus: 'success',token: token});
+                      res.status(200).json({apiStatus: 'Success', "message": "successfully logged in", "token": token});
                   } else {
                     // add auth
                     let newAuth = new AuthModel();
@@ -123,28 +99,46 @@ export default class UserController {
                       // generate token with new created auth record
                       let token = TokenHelper.getToken(auth);
                       console.log('token...',token);
-                      res.status(200).json({apiStatus: 'success',token: token});
+                      res.status(200).json({apiStatus: 'Success', "message": "successfully logged in", "token": token});
                     } catch(err) {
-                      console.log(err);
-                      res.status(400).json({errMsg: err});
+                      res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error": err});;
                     }
                   }
                 } catch(err) {
-                  res.status(400).json({errMsg: err});
+                  res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error": err});
                 }
                 
               } else {
-                res.status(403).json({ apiStatus: "Failure", msg: "Invalid password"});
+                res.status(403).json({ "apiStatus": "Failure", "message": "Invalid password"});
               }
             } else {
-              res.status(403).json({ apiStatus: "Failure", msg: "Invalid email"});
+              res.status(403).json({ "apiStatus": "Failure", "message": "Invalid email"});
             }
-        } catch(e) {
-          console.log(e);
-          res.status(400).json({errMsg: e});
+        } catch(err) {
+          res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error": err});;
         } 
       }else{
-          res.status(403).json({ "apiStatus": "Failure", "msg": "Invalid credentials"});
+          res.status(403).json({ "apiStatus": "Failure", "message": "Invalid credentials"});
       }
+    }
+
+    /**
+     * Get profile
+     * @param {*} req 
+     * @param {*} res 
+     * @param {*} next 
+     */
+    public static async signOut(req: Request, res: Response, next: NextFunction) {
+
+        try {
+
+            // remove token auth info from auth collection
+            await AuthModel.remove({_id: req.user._id});
+            // Response
+            res.status(200).json({apiStatus: 'Success', "message": "User signout successfully"});
+        } catch (err) {
+            // Error response
+            res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error": err});;
+        }
     }
 }

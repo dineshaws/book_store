@@ -1,0 +1,215 @@
+<!doctype html>
+<html>
+<head>
+	<title>Book Store</title>
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css">
+	<link rel="stylesheet" type="text/css" href="css/structure.css">
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+	<style>
+		body 		{ padding-top:80px; word-wrap:break-word; }
+		#ddlsearch {
+		    width: auto;
+		}
+	</style>
+</head>
+<body>
+<div class="container">
+	<!-- show any messages that come back with authentication -->
+	<div id="alert_success" class="alert alert-success"></div>
+	<div id="alert_danger" class="alert alert-danger"></div>
+
+	<div class="page-header text-center">
+		<h1><span class="fa fa-anchor"></span> Profile Page</h1>
+		<a href="/add_book" class="btn btn-default btn-sm">Add Book</a>
+		<a href="javascript:void(0)" onclick="signout();" class="btn btn-default btn-sm">Signout</a>
+	</div>
+
+	<div class="row">
+
+		<!-- LOCAL INFORMATION -->
+		<div class="col-sm-6">
+			<div class="well">
+				<h3><span class="fa fa-user"></span> Local</h3>
+
+					<p>
+						<strong>Username</strong>: <span id="username"></span><br>
+						<strong>Email</strong>: <span id="email"></span><br>
+						<strong>Role</strong>: <span id="role"></span>
+					</p>
+
+			</div>
+		</div>
+
+		<div class="col-sm-6"> 
+			<div class="well">
+			<h3><span class="fa fa-search"></span> Book Search</h3>
+
+				<form class="form-horizontal">
+		            <div class="input-group">
+		              <div class="ddl-select input-group-btn">
+		                <select id="ddlsearch" class="selectpicker form-control" data-style="btn-primary">
+		                  <option value="title">Title</option>
+		                  <option value="isbn_10">ISBN 10</option>
+		                  <option value="isbn_13">ISBN 13</option>
+		                  <option value="authors">Author</option>
+		                  <option value="categories">Genre</option>
+		                </select>
+		              </div>
+		              <input id="txtkey" class="form-control" placeholder="Enter here" aria-describedby="ddlsearch" type="text">
+		              <span class="input-group-btn">
+		                <button id="btn-search"  onclick="search();" class="btn btn-info" type="button"><i class="fa fa-search fa-fw"></i></button>
+		              </span>
+		            </div>
+		        </form>
+
+
+
+			</div>
+		</div>
+
+	</div>
+
+	<div class="row" id="Result">
+
+	</div>
+
+</div>
+
+<script>
+var token = localStorage.getItem('bs_token');
+function search() {
+	var search_by = $('#ddlsearch option:selected').val();
+	var search_key = $('#txtkey').val();
+
+    if(search_by && search_key){
+      var form = new Object();
+        form["search_by"] = search_by;
+        form["search_key"] = search_key
+        console.log(form);
+        fetch("/api/v1/books/search", { 
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+	            'Content-Type': 'application/json',
+	            'access-token': token
+            }, 
+            body: JSON.stringify(form)
+        })
+        .then(function(response) {
+            return response.json()
+        })
+        .then(function(data) {
+            if(data.apiStatus && data.apiStatus == "Failure") {
+                $('.alert-danger').html(data.message);
+                $('.alert-danger').show();
+            } else {
+            	var tablestart="<table id=myTable border=1>";
+            	var tdata = "";
+            	tdata += "<tr bgcolor=#d4e3e5>";
+            	tdata += "<th>Title</th>";
+            	tdata += "<th>Subtitle</th>";
+            	tdata += "<th>Authors</th>";
+            	tdata += "<th>Genre</th>";
+            	tdata += "<th>isCoverExist</th>";
+            	tdata += "<th>Cover</th>";
+            	tdata += "</tr>";
+            	data.books.forEach(function(item) {
+            		var isCoverExist = "No";
+            		if(item.cover) {
+            			isCoverExist = "Yes";
+            		}
+            		var subtitle = item.subtitle || '';
+					tdata += "<tr>";
+	            	tdata += "<td>"+item.title+"</td>";
+	            	tdata += "<td>"+subtitle+"</td>";
+	            	tdata += "<td>"+item.authors.toString()+"</td>";
+	            	tdata += "<td>"+item.categories.toString()+"</td>";
+	            	tdata += "<td>"+isCoverExist+"</td>";
+	            	tdata += "<td>"+item.cover+"</td>";
+	            	tdata += "</tr>";           
+				})
+				var tableend = "</table>";
+				var str1= 'No records found';
+				if(data.books.length) {
+					str1=tablestart + tdata + tableend;
+				}
+					document.getElementById('Result').innerHTML = str1;
+            }
+        });
+    } else {
+    	$('.alert-danger').html("please enter keyword");
+        $('.alert-danger').show();
+    }
+
+}
+
+
+$(document).ready(function() {
+    fetch("/api/v1/users/profile", { 
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'access-token': token
+        }
+    })
+    .then(function(response) {
+        console.log(response);
+        return response.json()
+    })
+    .then(function(data) {
+        if(data.apiStatus && data.apiStatus == "Failure") {
+            $('.alert-danger').html(data.message);
+            $('.alert-danger').show();
+            setTimeout(function() {
+            	window.location.href="signin";
+            },1000);
+        } else {
+            //$('.alert-success').html(data.message);
+            //$('.alert-success').show();
+            $('#username').html(data.userInfo.username);
+            $('#email').html(data.userInfo.email);
+            $('#role').html(data.userInfo.role);
+            
+        }
+    });
+
+    
+
+});
+
+function signout() {
+    	fetch("/api/v1/users/signout", { 
+	        method: 'GET',
+	        headers: {
+	            'Accept': 'application/json',
+	            'Content-Type': 'application/json',
+	            'access-token':token
+	        }
+	    })
+	    .then(function(response) {
+	        console.log(response);
+	        return response.json()
+	    })
+	    .then(function(data) {
+	        if(data.apiStatus && data.apiStatus == "Failure") {
+	            $('.alert-danger').html(data.message);
+	            $('.alert-danger').show();
+	        } else {
+	            $('.alert-success').html(data.message);
+	            $('.alert-success').show();
+	            localStorage.removeItem('bs_token');
+	            setTimeout(function() {
+	            	window.location.href="signin";
+	            },1000);
+	            
+	        }
+	    });
+    }
+
+</script>
+
+
+</body>
+</html>

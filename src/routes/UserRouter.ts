@@ -1,6 +1,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import UserController from '../controllers/UserController';
 import ValidatorHelper from '../helpers/ValidatorHelper';
+import TokenHelper from '../helpers/TokenHelper';
 
 export class UserRouter {
 	router:Router;
@@ -20,6 +21,9 @@ export class UserRouter {
    init() {
    		this.router.post('/signup', ValidatorHelper.schemaValidate('signup','user'), UserController.signUp);
          this.router.post('/signin', ValidatorHelper.schemaValidate('signin','user'), UserController.signIn);
+         this.router.get('/profile', TokenHelper.validateToken, TokenHelper.hasRole(['admin','publisher','author','reader','editor']), UserController.profile);
+         this.router.get('/signout', TokenHelper.validateToken, TokenHelper.hasRole(['admin','publisher','author','reader','editor']), UserController.signOut);
+         
    }
 
 }

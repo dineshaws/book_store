@@ -39,10 +39,13 @@
     "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.15.2",
     "connect-flash": "^0.1.1",
+    "cookie-parser": "^1.4.3",
     "debug": "^2.2.0",
     "dotenv": "^4.0.0",
     "ejs": "^2.5.7",
     "express": "^4.14.0",
+    "express-flash-notification": "^0.5.0",
+    "express-session": "^1.15.6",
     "gulp": "^3.9.1",
     "gulp-typescript": "^3.1.1",
     "jsonwebtoken": "^8.2.0",
@@ -51,6 +54,7 @@
     "morgan": "^1.7.0",
     "node-fetch": "^2.1.1",
     "redis": "^2.8.0",
+    "req-flash": "0.0.3",
     "typescript": "^2.0.6",
     "underscore": "^1.8.3"
   }

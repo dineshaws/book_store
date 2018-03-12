@@ -54,7 +54,14 @@ export default class BookController {
             // Get data
             let condition = {};
             if(req.body.search_key && req.body.search_by) {
-              condition[req.body.search_by] = req.body.search_key;
+              if(req.body.search_by === 'isbn_10' || req.body.search_by === 'isbn_13') {
+                condition["isbn."+req.body.search_by] = req.body.search_key;
+              } else if(req.body.search_by === 'authors' || req.body.search_by === 'categories') {
+                condition[req.body.search_by] = {$elemMatch:{$eq:req.body.search_key}};
+              } else {
+                condition[req.body.search_by] = req.body.search_key;
+              }
+              
             } 
             // redis caching for most searched book in a week by redis sorted sets
             const redisSearchListKey = redisKeyForSearchList();
@@ -69,17 +76,19 @@ export default class BookController {
                 bookRedisArr.push(localVal); // adding book title as member for sorted set
             })
             try {
-              await client.zadd(bookRedisArr)//[key, score, member]
+              if(bookRedisArr.length > 1) {
+                await client.zadd(bookRedisArr)//[key, score, member]
+              }
               // Response
-              res.status(200).json({"status":"success", "message":"Got books successfully", "books":result});
+              res.status(200).json({"apiStatus":"Success", "message":"Got books successfully", "books":result});
             } catch(err) {
               // Error response
-              res.status(500).json({"status":"failure", "message":"Error while zadd data", "err":err});
+              res.status(500).json({"apiStatus":"Failure", "message":"Error while zadd data", "err":err});
             }
             
         } catch (err) {
             // Error response
-            res.status(500).json({"status":"failure", "message":"Error while fetching data", "err":err});
+            res.status(500).json({"apiStatus":"Failure", "message":"Error while fetching data", "err":err});
         }
     }
 
@@ -109,15 +118,15 @@ export default class BookController {
             tempObj['isbn']['isbn_13'] = req.body.isbn_13;
         }
         tempObj['cover'] = req.body.cover;
-        tempObj['seed_type'] = 'api';
+        tempObj['seed_type'] = req.body.seed_type || 'api';
         // Create model
         let bookModel = new BookModel(tempObj);
         // Save
         try {
           await bookModel.save();
-          res.status(201).send({"status":"success", "message": 'Created!'});
+          res.status(201).send({"apiStatus":"Success", "message": 'Book Added!'});
         } catch(err) {
-          res.status(500).json({"status":"failure", "message":"Error while save data", "err":err});
+          res.status(500).json({"apiStatus":"Failure", "message":"Error while save data", "err":err});
         }
     }
 
@@ -167,13 +176,13 @@ export default class BookController {
               // save records in one shot using insertMany, mongodb version 3.6+ compatible
               await BookModel.insertMany(finalBooks); 
 
-              res.status(201).send({"status":"success", "message": 'Created!'});
+              res.status(201).send({"apiStatus":"Success", "message": 'Created!'});
 
             } catch(err) {
-              res.status(500).json({"status":"failure", "message":"Error while fetch api records", "err":err});
+              res.status(500).json({"apiStatus":"Failure", "message":"Error while fetch api records", "err":err});
             }
         } else {
-            res.status(404).json({"status":"failure", "message":"Seed End Point not exist"});
+            res.status(404).json({"apiStatus":"Failure", "message":"Seed End Point not exist"});
         }
     }
 }

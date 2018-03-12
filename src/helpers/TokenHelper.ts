@@ -40,15 +40,15 @@ export default class TokenHelper {
                     return next();
                   } else {
                     console.log("user does not exist");
-                    return res.status(401).json({message: "Invalid access token"});
+                    return res.status(401).json({"apiStatus": "Failure", message: "Invalid access token"});
                   }
 	    	} catch(err) {
 	    		console.log("jwt.decode failed" , err);
-                return res.status(401).json({message: "Invalid access token"});
+                res.status(500).json({"apiStatus": "Failure", "message": "Invalid token", "error": err});;
 	    	}
 	    } else {
 	        console.log("token is empty");
-	        return res.status(401).json({message: "Missing access token"});
+	        return res.status(401).json({"apiStatus": "Failure", "message": "Missing access token"});
 	    }
 	}
 
@@ -69,18 +69,17 @@ export default class TokenHelper {
 		                    req.user.userData = userData;
 		                    next();
 		                } else {
-		                    return res.status(401).json({message: "Invalid token to access this api"});
+		                    return res.status(401).json({"apiStatus": "Failure", "message": "Unauthorized access"});
 		                }
 		            } else {
 		                console.log("roles not defined well in HasRole middleware, should be array and allowed multiple role also")
-		                return res.status(500).json({message: "Role not defined in middleware"});
+		                return res.status(500).json({"apiStatus": "Failure", "message": "Role not defined in middleware"});
 		            }
               	} else {
-	                return res.status(500).json({message: "User not exist"});
+	                return res.status(500).json({"apiStatus": "Failure", "message": "User not exist"});
               	}
-	        } catch(e) {
-	          console.log(e);
-	          res.status(400).json({errMsg: e});
+	        } catch(err) {
+	          return res.status(500).json({"apiStatus": "Failure", "message": "Unexpected error", "error":err});
 	        } 
 	    }
 	}
