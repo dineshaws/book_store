@@ -56,18 +56,17 @@ class App {
    */
   private connectToMongo(): void  {
       console.log("MONGO_URI ",process.env.MONGO_URI)
-      // Connect to mongo using mongoose
-      // @todo: fix "open()" DeprecationWarning warning
-      /*mongoose.connect(process.env.MONGO_URI, {
-          db: { safe: true }
-      });*/
-      mongoose.connect(process.env.MONGO_URI, function(err, db) {
-          if (err) {
-              console.log('Unable to connect to the server. Please start the server. Error:', err);
-          } else {
-              console.log('Connected to Server successfully!');
-          }
-      });
+      if(process.env.MONGO_URI) {
+        mongoose.connect(process.env.MONGO_URI, function(err, db) {
+            if (err) {
+                console.log('Unable to connect to the server. Please start the server. Error:', err);
+            } else {
+                console.log('Connected to Server successfully!');
+            }
+        });
+      } else {
+        console.log('set MONGO_URI in .env file');
+      }
 
   }
 
